@@ -14,18 +14,28 @@ class CostMatrix(value: List[List[Option[Int]]]) {
   def size: Int = value.length
 
   def outwardEdges(from: Int): Set[Int] =
-    if(from >= 0 & from < size)
-      ((0 until size) zip value(from)).collect{
+    if (from >= 0 & from < size)
+      ((0 until size) zip value(from)).collect {
         case (vertex, Some(_)) => vertex
       }.toSet
     else
       throw new IllegalArgumentException("outwardEdges source is out of bounds.")
 
   def costOf(source: Int, dest: Int): Option[Int] =
-    if(source >= 0 & source < size & dest >= 0 & dest < size)
+    if (source >= 0 & source < size & dest >= 0 & dest < size)
       value(source)(dest)
     else
       throw new IllegalArgumentException("costOf argument is out of cost matrix bounds.")
+
+  def pathCost(path: List[Int]): Option[Int] = {
+    val costs = (path zip path.tail).map {
+      case (source, dest) => costOf(source, dest)
+    }
+    if (costs.forall(_.isDefined))
+      Some(costs.map(_.get).sum)
+    else
+      None
+  }
 }
 
 object CostMatrix {

@@ -12,4 +12,8 @@ object Config {
   object printing {
     def spacing: Int = 8
   }
+
+  object concurrency {
+    def parallelism: Int = 4
+  }
 }

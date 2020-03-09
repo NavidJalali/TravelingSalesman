@@ -26,16 +26,6 @@ class CostMatrix(value: List[List[Option[Int]]]) {
       value(source)(dest)
     else
       throw new IllegalArgumentException("costOf argument is out of cost matrix bounds.")
-
-  def pathCost(path: List[Int]): Option[Int] = {
-    val costs = (path zip path.tail).map {
-      case (source, dest) => costOf(source, dest)
-    }
-    if (costs.forall(_.isDefined))
-      Some(costs.map(_.get).sum)
-    else
-      None
-  }
 }
 
 object CostMatrix {

@@ -2,13 +2,13 @@ package com.tsp
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val cost = CostMatrix.randomGraph(12)
+    val cost = CostMatrix.randomGraph(10)
     cost match {
       case Some(c) => {
         c.printMatrix()
-        BruteForce.bruteForce(c, 0)
+        BruteForce.bruteForceWithActorSystem(c, 0)
       }
-      case None => println("invalid cost")
+      case None => println("Invalid cost matrix.")
     }
   }
 }

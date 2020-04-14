@@ -1,0 +1,73 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+
+%%% PAGE DIMENSIONS
+\usepackage{geometry} % to change the page dimensions
+\geometry{a4paper} % or letterpaper (US) or a5paper or....
+% \geometry{margin=2in} % for example, change the margins to 2 inches all round
+% \geometry{landscape} % set up the page for landscape
+%   read geometry.pdf for detailed page layout information
+
+\usepackage{graphicx} % support the \includegraphics command and options
+
+% \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%% PACKAGES
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+% These packages are all incorporated in the memoir class to one degree or another...
+
+%%% HEADERS & FOOTERS
+\usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+\pagestyle{fancy} % options: empty , plain , fancy
+\renewcommand{\headrulewidth}{0pt} % customise the layout...
+\lhead{}\chead{}\rhead{}
+\lfoot{}\cfoot{\thepage}\rfoot{}
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+%%% ToC (table of contents) APPEARANCE
+\usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+\usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+\renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+\renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
+
+%%% END Article customizations
+
+%%% The "real" document content comes below...
+
+\title{Multiple Traveling Salesman Problem [DRAFT]}
+\author{Navid Kooshkjalali}
+\date{Autumn 2020}
+
+\begin{document}
+\maketitle
+\vspace*{2cm}
+\paragraph{Abstract}
+The multiple traveling salesman problem (mTSP) is a generalization of the famous traveling salesman problem (TSP), where more than one salesman is allowed to be used in the solution. While there is a considerable body of literature sorounding the TSP and variants of it like the vehicle routing problem (VRP), mTSP which seems to have various real-life applications is not yet researched thoroughly. The purpose of this survey is to apply a genetic algorithm, a heuristic method which produces a feasable solution within reasonable time, to solve the mTSP in Scala.
+
+\newpage
+\section{Introduction}
+\subsection{Blueprint}
+This paper will proceed as follows: TSP and mTSP will be formally introduced. Incrementally better (faster) solutions will be offered for both. Different approaches to solving each problem are discussed. Finally a genetic algorithm will be implemented in Scala for both the TSP and the mTSP.
+\subsection{Problem Statement}
+
+\subsubsection{TSP}
+Given a set of nodes, let there be a salesman located at a single depot node. The remaining nodes (cities) that are to be visited are called intermediate nodes. Then the TSP is finding the tour that starts and ends at the depot, such that such that each intermediate node is visited exactly once and the total cost along that tour is minimized. This is equivalent to finding the least weight Hamiltonian cycle in a complete weighted graph. Since mTSP is an extention of TSP all mTSP solutions are also valid TSP solutions.
+
+
+\subsubsection{mTSP}
+Given a set of nodes, let there be m salesmen located at a single depot node. The remaining nodes (cities) that are to be visited are called intermediate nodes. Then, the mTSP consists of finding tours for all \textit{m} salesmen, who all start and end at the depot, such that each intermediate node is visited exactly once and the total cost of visiting all nodes is minimized. This is a relaxation of the VRP, where the capacity restrictions are removed. This means that solutions for the VRP are also applicable to mTSP by giving sufficiently large capacities to the salesmen. However the scope of this paper will be limited to mTSP and solutions for the VRP will not be discussed.
+
+
+\end{document}

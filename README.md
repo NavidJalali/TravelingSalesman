@@ -1,1 +1,1 @@
-### Multiagent Travelling Salesman Problem
+### Multiagent Traveling Salesman Problem

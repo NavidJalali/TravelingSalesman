@@ -13,11 +13,11 @@ class CostMatrix(value: List[List[Option[Int]]]) {
 
   def size: Int = value.length
 
-  def outwardEdges(from: Int): Set[Int] =
+  def outgoingVerticesAndCosts(from: Int): Set[(Int, Int)] =
     if (from >= 0 & from < size)
       ((0 until size) zip value(from)).collect {
-        case (vertex, Some(_)) => vertex
-      }.toSet
+        case (vertex, Some(cost)) => (vertex, cost)
+      }.toSet diff Set((from, 0))
     else
       throw new IllegalArgumentException("outwardEdges source is out of bounds.")
 

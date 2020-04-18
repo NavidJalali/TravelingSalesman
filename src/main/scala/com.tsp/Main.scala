@@ -3,8 +3,8 @@ import Timer.Timer
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val cost = CostMatrix.randomGraph(11)
-    // val cost = CostMatrix(Constants.exampleMatrix)
+    // val cost = CostMatrix.randomGraph(11)
+    val cost = CostMatrix(Constants.exampleMatrix)
     cost match {
       case Some(c) =>
         c.printMatrix()

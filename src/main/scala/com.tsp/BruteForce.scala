@@ -55,7 +55,7 @@ object BruteForce {
             .map(path => (path, path.cost(costMatrix)))
             .collect { case (path, Some(cost)) => (path, cost) }
           if (batch.nonEmpty)
-            Future.successful(batch.minBy(_._2))
+            Future.successful(batch.reduce(reducer))
           else Future.failed(throw new NoSuchElementException)
         }
       ).withAttributes(ActorAttributes.supervisionStrategy(decider))

@@ -21,6 +21,35 @@ class CostMatrix(value: List[List[Option[Int]]]) {
     else
       throw new IllegalArgumentException("outwardEdges source is out of bounds.")
 
+  def getExistingRoutes(startFrom: Int, length: Int): Set[(List[Int], Int)] = {
+    val init = outgoingVerticesAndCosts(startFrom).map {
+      case (vertex, cost) => (List(vertex), cost)
+    }
+    val targetSet = (0 until length).toSet diff Set(startFrom)
+
+    @scala.annotation.tailrec
+    def iterate(pathCostSet: Set[(List[Int], Int)]): Set[(List[Int], Int)] = {
+      if (pathCostSet.forall(_._1.toSet == targetSet)) {
+        pathCostSet.collect {
+          case (path, totalCost) if outgoingVerticesAndCosts(path.last)
+            .exists(t => t._1 == startFrom) =>
+            val t = outgoingVerticesAndCosts(path.last).filter(t => t._1 == startFrom).head
+            (path :+ startFrom, totalCost + t._2)
+        }
+      } else {
+        iterate(pathCostSet.collect {
+          case (path, totalCost) if outgoingVerticesAndCosts(path.last)
+            .exists(t => t._1 != startFrom && !(path contains t._1)) =>
+             outgoingVerticesAndCosts(path.last)
+              .filter(t => t._1 != startFrom && !(path contains t._1)).map {
+              case (vertex, cost) => (path :+ vertex, totalCost + cost)
+            }
+        }.flatten)
+      }
+    }
+    iterate(init)
+  }
+
   def costOf(source: Int, dest: Int): Option[Int] =
     if (source >= 0 & source < size & dest >= 0 & dest < size)
       value(source)(dest)

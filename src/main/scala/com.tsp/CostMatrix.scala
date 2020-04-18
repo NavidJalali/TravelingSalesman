@@ -60,14 +60,10 @@ case class CostMatrix(value: List[List[Option[Int]]]) {
 
 object CostMatrix {
   def apply(value: List[List[Option[Int]]]): Option[CostMatrix] =
-    if (isValidCostMatrix(value)) {
-      Some(new CostMatrix(value))
-    } else {
-      None
-    }
+    if (isValidCostMatrix(value)) Some(new CostMatrix(value)) else None
 
   def isValidCostMatrix(c: List[List[Option[Int]]]): Boolean =
-    hasZeroesAlongDiagonal(c) & isSquareMatrix(c)
+    hasZeroesAlongDiagonal(c) && isSquareMatrix(c)
 
   private def hasZeroesAlongDiagonal(c: List[List[Option[Int]]]): Boolean =
     c.indices.map(i => c(i)(i).contains(0)).reduce(_ & _)
@@ -76,11 +72,7 @@ object CostMatrix {
     c.map(_.length == c.length).reduce(_ & _)
 
   private def randomEntry: Option[Int] =
-    if (nextDouble <= Config.chance.edgeExists) {
-      Some((nextDouble * Config.graph.maxWeight).ceil.toInt)
-    } else {
-      None
-    }
+    if (nextDouble <= Config.chance.edgeExists) Some((nextDouble * Config.graph.maxWeight).ceil.toInt) else None
 
   def randomGraph(size: Int): Option[CostMatrix] =
     if (size < 0) {

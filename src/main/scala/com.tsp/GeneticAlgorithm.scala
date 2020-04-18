@@ -8,7 +8,7 @@ object Chromosome {
       chromosome.value.size == costMatrix.size - 1) && allNodesExist(costMatrix)(chromosome)
   }
 
-  def allNodesExist(costMatrix: CostMatrix)(chromosome: Chromosome): Boolean = {
+  private def allNodesExist(costMatrix: CostMatrix)(chromosome: Chromosome): Boolean = {
     (chromosome.value zip chromosome.value.tail).forall{
       case (from, to) => costMatrix.value(from)(to).isDefined
     }

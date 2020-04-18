@@ -2,7 +2,7 @@ package com.tsp
 
 object Config {
   object chance {
-    def edgeExists: Double = 0.7
+    def edgeExists: Double = 1
   }
 
   object graph {
@@ -16,6 +16,6 @@ object Config {
 
   object concurrency {
     def parallelism: Int = 4
-    def batching: Int = 1024
+    def batching: Int = 512
   }
 }

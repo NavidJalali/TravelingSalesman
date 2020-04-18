@@ -30,12 +30,12 @@ object Timer {
     def start: Behavior[TimerMessage] =
       running(State.initial)
     def running(state: State): Behavior[TimerMessage] = {
-      Behaviors.receive( (_, msg) =>
+      Behaviors.receive( (ctx, msg) =>
         msg match {
           case Start =>
             running(State(System.nanoTime()))
           case Stop =>
-            println(s"Elapsed time: ${(System.nanoTime() - state.startTime)/1000000f} ms")
+            ctx.log.debug(s"Elapsed time: ${(System.nanoTime() - state.startTime)/1000000f} ms")
             Behaviors.stopped
         }
       )

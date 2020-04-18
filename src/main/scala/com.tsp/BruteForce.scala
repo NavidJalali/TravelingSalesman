@@ -24,7 +24,10 @@ object BruteForce {
         (tour, cost)
     }.toList
     val bestTour = possibleTours.sortBy(_._2).headOption
-    println(s"best tour: $bestTour")
+    bestTour match {
+      case Some(tour) => println(s"best tour: ${tour._1.prettyString}, ${tour._2}")
+      case None => println("No such tour.")
+    }
   }
 
   def bruteForceWithActorSystem(costMatrix: CostMatrix, source: Int): Unit = {

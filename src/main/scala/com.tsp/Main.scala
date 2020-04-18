@@ -9,9 +9,9 @@ object Main {
         c.printMatrix()
         // println("dynamic bruteforce")
         // Timer.synchronousTimer{BruteForce.dynamicBruteForce(c, 0)}
-        println("bruteforce")
+        println("solving tsp by bruteforce")
         Timer.synchronousTimer{BruteForce.bruteForce(c, 0)}
-        println("actor bruteforce")
+        println("solving tsp by bruteforce in parallel")
         BruteForce.bruteForceWithActorSystem(c, 0)
       case None => println("Invalid cost matrix.")
     }

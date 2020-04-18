@@ -11,10 +11,11 @@ object Config {
 
   object printing {
     def spacing: Int = 8
+    def pathDelimiter: String = "->"
   }
 
   object concurrency {
-    def parallelism: Int = 8
-    def batching: Int = 256
+    def parallelism: Int = 4
+    def batching: Int = 1024
   }
 }

@@ -2,7 +2,7 @@ package com.tsp
 
 import scala.util.Random.nextDouble
 
-class CostMatrix(value: List[List[Option[Int]]]) {
+case class CostMatrix(value: List[List[Option[Int]]]) {
   def printMatrix(): Unit = {
     value.map(_.map {
       case Some(cost) => cost.toString
@@ -40,13 +40,14 @@ class CostMatrix(value: List[List[Option[Int]]]) {
         iterate(pathCostSet.collect {
           case (path, totalCost) if outgoingVerticesAndCosts(path.last)
             .exists(t => t._1 != startFrom && !(path contains t._1)) =>
-             outgoingVerticesAndCosts(path.last)
+            outgoingVerticesAndCosts(path.last)
               .filter(t => t._1 != startFrom && !(path contains t._1)).map {
               case (vertex, cost) => (path :+ vertex, totalCost + cost)
             }
         }.flatten)
       }
     }
+
     iterate(init)
   }
 

@@ -2,7 +2,7 @@ package com.tsp
 
 import scala.util.Random.nextDouble
 
-case class CostMatrix(value: List[List[Option[Int]]]) {
+case class CostMatrix(value: Vector[Vector[Option[Int]]]) {
   def printMatrix(): Unit = {
     value.map(_.map {
       case Some(cost) => cost.toString
@@ -21,14 +21,14 @@ case class CostMatrix(value: List[List[Option[Int]]]) {
     else
       throw new IllegalArgumentException("outwardEdges source is out of bounds.")
 
-  def getExistingRoutes(startFrom: Int, length: Int): Set[(List[Int], Int)] = {
+  def getExistingRoutes(startFrom: Int, length: Int): Set[(Vector[Int], Int)] = {
     val init = outgoingVerticesAndCosts(startFrom).map {
-      case (vertex, cost) => (List(vertex), cost)
+      case (vertex, cost) => (Vector(vertex), cost)
     }
     val targetSet = (0 until length).toSet diff Set(startFrom)
 
     @scala.annotation.tailrec
-    def iterate(pathCostSet: Set[(List[Int], Int)]): Set[(List[Int], Int)] = {
+    def iterate(pathCostSet: Set[(Vector[Int], Int)]): Set[(Vector[Int], Int)] = {
       if (pathCostSet.forall(_._1.toSet == targetSet)) {
         pathCostSet.collect {
           case (path, totalCost) if outgoingVerticesAndCosts(path.last)
@@ -59,16 +59,16 @@ case class CostMatrix(value: List[List[Option[Int]]]) {
 }
 
 object CostMatrix {
-  def apply(value: List[List[Option[Int]]]): Option[CostMatrix] =
+  def apply(value: Vector[Vector[Option[Int]]]): Option[CostMatrix] =
     if (isValidCostMatrix(value)) Some(new CostMatrix(value)) else None
 
-  def isValidCostMatrix(c: List[List[Option[Int]]]): Boolean =
+  def isValidCostMatrix(c: Vector[Vector[Option[Int]]]): Boolean =
     hasZeroesAlongDiagonal(c) && isSquareMatrix(c)
 
-  private def hasZeroesAlongDiagonal(c: List[List[Option[Int]]]): Boolean =
+  private def hasZeroesAlongDiagonal(c: Vector[Vector[Option[Int]]]): Boolean =
     c.indices.map(i => c(i)(i).contains(0)).reduce(_ & _)
 
-  private def isSquareMatrix(c: List[List[Option[Int]]]): Boolean =
+  private def isSquareMatrix(c: Vector[Vector[Option[Int]]]): Boolean =
     c.map(_.length == c.length).reduce(_ & _)
 
   private def randomEntry: Option[Int] =
@@ -86,9 +86,9 @@ object CostMatrix {
             else
               randomEntry
           }
-          ).toList
+          ).toVector
         }
-        ).toList
+        ).toVector
       )
     }
 }

@@ -15,7 +15,7 @@ object Config {
   }
 
   object concurrency {
-    def parallelism: Int = 8
-    def batching: Int = 256
+    def parallelism: Int = 16
+    def batching: Int = 512
   }
 }

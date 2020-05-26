@@ -1,6 +1,6 @@
 package com.tsp
 
-case class Path(value: List[Int])
+case class Path(value: Vector[Int])
 
 object Path {
 

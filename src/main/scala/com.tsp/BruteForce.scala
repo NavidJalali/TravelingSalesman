@@ -15,22 +15,23 @@ import scala.util.{Failure, Success}
 
 object BruteForce {
   def allTours(costMatrix: CostMatrix, source: Int): Iterator[Path] = ((0 until costMatrix.size)
-    .toSet diff Set(source)).toList
-    .permutations.map(p => Path((source :: p) :+ source))
+    .toSet diff Set(source)).toVector
+    .permutations.map(p => Path((source +: p) :+ source))
 
   def bruteForce(costMatrix: CostMatrix, source: Int): Unit = {
     val possibleTours = allTours(costMatrix, source).map(tour => (tour, tour.cost(costMatrix))).collect {
       case (tour, Some(cost)) =>
         (tour, cost)
     }.toList
-    val bestTour = possibleTours.sortBy(_._2).headOption
-    bestTour match {
-      case Some(tour) => println(s"best tour: ${tour._1.prettyString}, ${tour._2}")
-      case None => println("No such tour.")
+
+    possibleTours.minBy {
+      case (_, cost) => cost
+    } match {
+      case (path, cost)  => println(s"best tour: ${path.prettyString}, $cost")
     }
   }
 
-  def bruteForceWithActorSystem(costMatrix: CostMatrix, source: Int): Unit = {
+  def bruteForceWithStreams(costMatrix: CostMatrix, source: Int): Unit = {
 
     implicit val system: ActorSystem = ActorSystem("BruteForce")
     implicit val ctx: ExecutionContext = system.dispatcher
@@ -51,12 +52,14 @@ object BruteForce {
       .grouped(Config.concurrency.batching)
       .mapAsyncUnordered(Config.concurrency.parallelism)(
         paths => {
-          val batch = paths
-            .map(path => (path, path.cost(costMatrix)))
-            .collect { case (path, Some(cost)) => (path, cost) }
-          if (batch.nonEmpty)
-            Future.successful(batch.reduce(reducer))
-          else Future.failed(throw new NoSuchElementException)
+          Future {
+            paths
+              .map(path => (path, path.cost(costMatrix)))
+              .collect { case (path, Some(cost)) => (path, cost) } match {
+              case batch if batch.nonEmpty => batch.minBy(_._2)
+              case _ => throw new NoSuchElementException
+            }
+          }
         }
       ).withAttributes(ActorAttributes.supervisionStrategy(decider))
       .runWith(Sink.reduce(reducer))
@@ -77,7 +80,7 @@ object BruteForce {
   }
 
   def dynamicBruteForce(costMatrix: CostMatrix, source: Int): Unit = {
-    val bestPath = costMatrix.getExistingRoutes(0, costMatrix.size).toList
+    val bestPath = costMatrix.getExistingRoutes(0, costMatrix.size).toVector
       .map { case (path, cost) => (Path(path), cost) }
       .sortBy(_._2)
       .headOption

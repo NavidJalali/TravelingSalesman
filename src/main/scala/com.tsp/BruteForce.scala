@@ -15,7 +15,7 @@ import scala.util.{Failure, Success}
 
 object BruteForce {
   def allTours(costMatrix: CostMatrix, source: Int): Iterator[Path] = ((0 until costMatrix.size)
-    .toSet diff Set(source)).toVector
+    .toSet - source).toVector
     .permutations.map(p => Path((source +: p) :+ source))
 
   def bruteForce(costMatrix: CostMatrix, source: Int): Unit = {

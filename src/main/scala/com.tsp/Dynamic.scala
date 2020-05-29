@@ -1,7 +1,5 @@
 package com.tsp
 
-import com.tsp.{Constants, CostMatrix, Path}
-
 object Dynamic {
   type CostWithParent = Option[(Int, Int)]
 
@@ -50,8 +48,7 @@ object Dynamic {
     minimumToSourceWithParent(source, allCitiesExceptSource) match {
       case t@Some((cost, _)) =>
         println(s"best tour: ${getPath(t, allCitiesExceptSource)(Vector.empty).map(Path(_).prettyString)}, $cost")
-      case None =>
-
+      case None => println("No such route exists.")
     }
   }
 }

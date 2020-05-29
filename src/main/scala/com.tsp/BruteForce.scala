@@ -79,7 +79,7 @@ object BruteForce {
     }
   }
 
-  def dynamicBruteForce(costMatrix: CostMatrix, source: Int): Unit = {
+  def routesByExistence(costMatrix: CostMatrix, source: Int): Unit = {
     val bestPath = costMatrix.getExistingRoutes(0, costMatrix.size).toVector
       .map { case (path, cost) => (Path(path), cost) }
       .sortBy(_._2)

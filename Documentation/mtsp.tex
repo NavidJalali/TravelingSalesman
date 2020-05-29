@@ -13,6 +13,8 @@
 %   read geometry.pdf for detailed page layout information
 
 \usepackage{graphicx} % support the \includegraphics command and options
+\usepackage{amsmath}
+
 
 % \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
 
@@ -54,20 +56,129 @@
 \maketitle
 \vspace*{2cm}
 \paragraph{Abstract}
-The multiple traveling salesman problem (mTSP) is a generalization of the famous traveling salesman problem (TSP), where more than one salesman is allowed to be used in the solution. While there is a considerable body of literature sorounding the TSP and variants of it like the vehicle routing problem (VRP), mTSP which seems to have various real-life applications is not yet researched thoroughly. The purpose of this survey is to apply a genetic algorithm, a heuristic method which produces a feasable solution within reasonable time, to solve the mTSP in Scala.
-
+The multiple traveling salesman problem (mTSP) is a generalization of the famous traveling salesman problem (TSP), where more than one salesman is allowed to be used in the solution. While there is a considerable body of literature surrounding the TSP and variants of it like the vehicle routing problem (VRP), such as branch and bound\cite{branchnbound}, cutting planes\cite{cuttingplanes}, 2-opt\cite{twoopt}, particle swarm\cite{pswarm}, simulated annealing\cite{annealing}, ant colony\cite{ant1, ant2}, neural network\cite{nn}, tabu search\cite{tabu}, and genetic algorithms \cite{holland75, ga1, ga2, ga3}, mTSP which seems to have various real-life applications is not yet researched thoroughly. The purpose of this survey is to apply a Genetic Algorithm (GA), a stochastic derivative-free method which produces a feasible solution within reasonable time, to solve the mTSP in Scala. Genetic algorithms are evolutionary techniques of optimizing according to survival of the fittest proposed by Holland\cite{holland75}. They are useful algorithms for NP-Hard problems. The genetic algorithm depends on the selection criteria and the types and proportions of crossover and mutation operators in each generation.
 \newpage
 \section{Introduction}
-\subsection{Blueprint}
-This paper will proceed as follows: TSP and mTSP will be formally introduced. Incrementally better (faster) solutions will be offered for both. Different approaches to solving each problem are discussed. Finally a genetic algorithm will be implemented in Scala for both the TSP and the mTSP.
 \subsection{Problem Statement}
 
 \subsubsection{TSP}
-Given a set of nodes, let there be a salesman located at a single depot node. The remaining nodes (cities) that are to be visited are called intermediate nodes. Then the TSP is finding the tour that starts and ends at the depot, such that such that each intermediate node is visited exactly once and the total cost along that tour is minimized. This is equivalent to finding the least weight Hamiltonian cycle in a complete weighted graph. Since mTSP is an extention of TSP all mTSP solutions are also valid TSP solutions.
+Given a set of nodes, let there be a salesman located at a single depot node. The remaining nodes (cities) that are to be visited are called intermediate nodes. Then the TSP is finding the tour that starts and ends at the depot, such that such that each intermediate node is visited exactly once and the total cost along that tour is minimized. This is equivalent to finding the least weight Hamiltonian cycle in a complete weighted graph. Since mTSP is an extention of TSP all mTSP solutions are also valid TSP solutions. TSP was documented by Euler in 1759, whose interest was in solving the knight’s tour problem. It is the fundamental problem in the fields of computer science, engineering, operations research, discrete mathematics, graph theory, and so forth. In 1972, Richard M. Karp showed that the Hamiltonian cycle problem was NP-Complete, which implies the NP-Hardness of TSP.
 
 
 \subsubsection{mTSP}
 Given a set of nodes, let there be m salesmen located at a single depot node. The remaining nodes (cities) that are to be visited are called intermediate nodes. Then, the mTSP consists of finding tours for all \textit{m} salesmen, who all start and end at the depot, such that each intermediate node is visited exactly once and the total cost of visiting all nodes is minimized. This is a relaxation of the VRP, where the capacity restrictions are removed. This means that solutions for the VRP are also applicable to mTSP by giving sufficiently large capacities to the salesmen. However the scope of this paper will be limited to mTSP and solutions for the VRP will not be discussed.
 
+\subsection{Exact Solutions}
+Exact solutions are given by exact algorithms, which always solve an optimization problem to optimality. Unless P=NP, an exact algorithm for an NP-Hard optimation problem cannot run in worst-case polynomial time. In the case of TSP the only work when the number of cities is relatively small. They begin to take progressively longer as the size of the input grows such that using them is functionally impractical. 
 
+\subsection{Genetic Algorithms}
+Genetic Algorithms represent a computational model inspired by evolutionary sciences. Usually GAs represent optimization procedures in a binary search space. GAs are based on improving a set of solutions; a population. They then produce a successor population by mutations and recombinations of best solutions of the predecessor population. Thus at each iteration part of the current population is replaced with offspring of the fittest solutions, where the fitness of a solution has to be defined as a scalar measure. This implies that the population figuratively evolves towards an optimal solution. Genetic algorithms use three class of rules at every iteration to produce the successor population.
+\begin{itemize}
+  \item \textbf{Selection Rules} select the individual solutions, called parents that whose chromosomes will contribute to the next generation.
+  \item \textbf{Crossover Rules} combine two parents to form children to form the next generation.
+	\item \textbf{Mutation Rules} apply random changes to individual parents to form children.
+\end{itemize}
+
+A simple pure genetic algorithm consists of the following steps.
+\indent
+\begin{enumerate}
+\item Create an initial population of K chromosomes.
+\item. Evaluate the fitness of each chromosome.
+\item Choose $\frac{K}{2} $ parents from the current population via proportional selection.
+\item Randomly select two parents to create offspring using crossover operator.
+\item Apply mutation operators for minor changes in the results.
+\item Repeat steps 4 and 5 until all parents are selected and mated.
+\item Replace old population of chromosomes with new one.
+\item Evaluate the fitness of each chromosome in the new population.
+\item Terminate if the number of generations meets some upper bound, otherwise go to step 3.
+\end{enumerate}
+
+\section{Traveling Salesman Problem}
+The decision version of TSP (where given a length K, the task is to decide whether the graph has a tour of at most K) belongs to the class of NP-Complete problems. Therefore the worst case running time of the TSP increases superpolynomially (but no more than exponentially) with increase in the number of cities.  \par
+
+TSP can be formulated as an \textbf{integer linear program}\cite{ilp1, ilp2, ilp3} with several known formulations, most notable of which are \textbf{the Miller-Tucker-Zemlin(MTZ)} and \textbf{the Dantzig–Fulkerson–Johnson (DFJ) formulation}. \par
+Traditional approaches to solving TSP are similar to any NP-Hard problem.
+\subsection{Exact Aglorithms} Producing exact solutions using exact algorithms (algorithms that solve for optimality of the solution) can only work in reasonable time if the number of cities is small. The most direct of these solutions (the naive approach) is to try all possible permutations and find the cheapest by brute force search. The running time of such approach lies within a polynomial factor of $O(n!)$ where n is the number of cities. We will implement such a naive solution, and even try to significantly speed it up by chunking its subtasks and make use of highly concurrent programming and streaming. But despite our efforts such a solution will become impractical even when the number of cities is as small 20. A typical way to improve such brute force is the use of memoization (dynamic programming). \par
+ One of the earliest dynamic programming applications of TSP is the Held-Karp algorithm. This algorithm offers faster (but still exponential time) execution than exhaustive enumeration, with the disadvantage using a lot of space: the worst-case complexity of this algorithm is $O(2^n n^2)$ in time and $O(2^n n)$ in space.
+
+
+\newpage
+
+\begin{thebibliography}{10}
+
+
+\bibitem{branchnbound}
+G. Finke, A. Claus, and E. Gunn, “A two-commodity network
+flow approach to the traveling salesman problem,” vol. 41, pp.
+167–178.
+
+\bibitem{cuttingplanes}
+P. Miliotis, “Using cutting planes to solve the symmetric
+Travelling Salesman problem,” Mathematical Programming, vol.
+15, no. 1, pp. 177–188, 1978.
+
+\bibitem{twoopt}
+S. Lin and B. W. Kernighan, “An effective heuristic algorithm
+for the traveling-salesman problem,” Operations Research, vol.
+21, pp. 498–516, 1973.
+
+\bibitem{pswarm}
+ J. Kennedy, R. C. Eberhart, and Y. Shi, Swarm intelligence,
+morgan kaufmann publishers, Inc., San Francisco, CA, USA,
+2001.
+
+\bibitem{annealing}
+S. Kirkpatrick and G. Toulouse, “Configuration space analysis of
+travelling salesman problems,” Le Journal de Physique, vol. 46,
+no. 8, pp. 1277–1292, 1985.
+
+\bibitem{ant1}
+ M. Dorigo and L. M. Gambardella, “Ant colony system: a cooperative learning approach to the traveling salesman problem,”
+IEEE Transactions on Evolutionary Computation, vol. 1, no. 1, pp.
+53–66, 1997.
+
+\bibitem{ant2}
+ M. Dorigo, V. Maniezzo, and A. Colorni, “Ant system: optimization by a colony of cooperating agents,” IEEE Transactions on
+Systems, Man, and Cybernetics, Part B: Cybernetics, vol. 26, no.
+1, pp. 29–41, 1996.
+
+\bibitem{nn}
+ S. Bhide, N. John, and M. R. Kabuka, “A Boolean Neural
+Network Approach for the Traveling Salesman Problem,” IEEE
+Transactions on Computers, vol. 42, no. 10, pp. 1271–1278, 1993.
+
+\bibitem{tabu}
+F. Glover, “Artificial intelligence, heuristic frameworks and tabu
+search,” Managerial and Decision Economics, vol. 11, no. 5, pp.
+365–375, 1990.
+
+\bibitem{ga1}
+Z. Michalewicz, Genetic Algorithms + Data Structures = Evolution Programs, Springer, New York, NY, USA, 1996.
+\bibitem{ga2}
+C. Moon, J. Kim, G. Choi, and Y. Seo, “An efficient genetic
+algorithm for the traveling salesman problem with precedence
+constraints,” European Journal of Operational Research, vol. 140,
+no. 3, pp. 606–617, 2002.
+\bibitem{ga3}
+ J.-Y. Potvin, “Genetic algorithms for the traveling salesman
+problem,” Annals of Operations Research, vol. 63, pp. 339–370,
+1996.
+
+\bibitem{holland75}
+  J. H. Holland,
+  Adaptation in Natural and Artificial Systems: An
+Introductory Analysis with Applications to Biology, Control, and
+Artificial Intelligence, University of Michigan Press, Oxford, UK,
+1975.
+
+\bibitem{ilp1}
+ Papadimitriou, C.H.; Steiglitz, K., Combinatorial optimization: algorithms and complexity, Mineola, NY: Dover, pp.308-309.
+1998.
+\bibitem{ilp2}
+ Tucker, A. W., "On Directed Graphs and Integer Programs", IBM Mathematical research Project, Princeton University
+1960.
+\bibitem{ilp3}
+ Dantzig, George B. (1963), Linear Programming and Extensions, Princeton, NJ: PrincetonUP, pp. 545–7, ISBN 0-691-08000-3, sixth printing, 1974.
+
+\end{thebibliography}
 \end{document}

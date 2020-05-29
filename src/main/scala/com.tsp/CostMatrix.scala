@@ -6,7 +6,7 @@ case class CostMatrix(value: Vector[Vector[Option[Int]]]) {
   def printMatrix(): Unit = {
     value.map(_.map {
       case Some(cost) => cost.toString
-      case None => "∞"
+      case None => "Inf"
     }).map(_.fold("")((a, b) => a + " " * (Config.printing.spacing - b.length) + b))
       .foreach(println)
   }

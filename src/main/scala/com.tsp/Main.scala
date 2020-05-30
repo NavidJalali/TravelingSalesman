@@ -1,10 +1,11 @@
 package com.tsp
+import HeldKarp.Dynamic
 import Timer.Timer
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val cost = CostMatrix.randomGraph(20)
-    // val cost = CostMatrix(Constants.exampleMatrix)
+    //val cost = CostMatrix.randomGraph(20)
+    val cost = CostMatrix(Constants.exampleMatrix)
     cost match {
       case Some(c) =>
         c.printMatrix()

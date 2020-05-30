@@ -1,9 +1,24 @@
-package com.tsp
+package HeldKarp
+
+import HeldKarp.Memo.{BulkPut, GetState, MemoMessage, MemoStateResponse}
+import akka.actor.ActorSystem
+import akka.actor.typed.ActorRef
+import akka.actor.typed.scaladsl.Behaviors
+import com.tsp.{CostMatrix, Path}
+import akka.actor.typed.scaladsl.adapter._
+
+import concurrent.duration._
+import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
 object Dynamic {
   type CostWithParent = Option[(Int, Int)]
 
   def dynamic(costMatrix: CostMatrix, source: Int) = {
+    implicit val system: ActorSystem = ActorSystem("Held-Karp")
+    implicit val ctx: ExecutionContext = system.dispatcher
+    val Memo: ActorRef[MemoMessage] = system.spawnAnonymous(new Memo().start)
+
     val allCitiesExceptSource = (0 until costMatrix.size).toSet - source
     val powerSet = allCitiesExceptSource.subsets()
     val memo = collection.mutable.Map.empty[(Int, Set[Int]), CostWithParent]
@@ -27,12 +42,22 @@ object Dynamic {
 
     powerSet.foreach {
       case through if through.isEmpty => {
-        allCitiesExceptSource
-          .foreach(city => memo.put((city, Set.empty[Int]), costMatrix.costOf(source, city).map((_, source))))
+        Memo ! BulkPut(allCitiesExceptSource.map(
+          city => ((city, Set.empty[Int]), costMatrix.costOf(source, city).map((_, source)))
+        ).toMap)
+        // allCitiesExceptSource
+        //   .foreach(city => memo.put((city, Set.empty[Int]), costMatrix.costOf(source, city).map((_, source))))
       }
-      case through if through.nonEmpty => (allCitiesExceptSource -- through).foreach(
-        city => memo.put((city, through), minimumToSourceWithParent(city, through))
-      )
+      case through if through.nonEmpty => {
+
+        Memo ! BulkPut((allCitiesExceptSource -- through).map(
+          city => ((city, through), minimumToSourceWithParent(city, through))
+        ).toMap)
+
+//        (allCitiesExceptSource -- through).foreach(
+//          city => memo.put((city, through), minimumToSourceWithParent(city, through))
+//        )
+      }
     }
 
     def getPath(costWithParent: CostWithParent, unvisited: Set[Int])(accumulator: Vector[Int] = Vector.empty): Option[Vector[Int]] = {
@@ -40,7 +65,9 @@ object Dynamic {
         case Some((_, parent)) =>
           if (parent == source)
             Some(parent +: accumulator)
-          else memo.get((parent, unvisited - parent)).flatMap(getPath(_, unvisited - parent)(parent +: accumulator))
+          else {
+            memo.get((parent, unvisited - parent)).flatMap(getPath(_, unvisited - parent)(parent +: accumulator))
+          }
         case None => None
       }
     }
@@ -49,6 +76,11 @@ object Dynamic {
       case t@Some((cost, _)) =>
         println(s"best tour: ${getPath(t, allCitiesExceptSource)(Vector.empty).map(Path(_).prettyString)}, $cost")
       case None => println("No such route exists.")
+    }
+    system.terminate().onComplete {
+      case Success(_) => println(s"actor system terminated: ${system.name}")
+      case Failure(exception) =>
+        println(s"failed to terminate actor system ${system.name}: $exception")
     }
   }
 }

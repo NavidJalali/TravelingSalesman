@@ -1,5 +1,6 @@
 package com.tsp
-import Timer.Timer
+
+import com.Timer.Timer
 
 object Main {
   def main(args: Array[String]): Unit = {
@@ -8,8 +9,11 @@ object Main {
     cost match {
       case Some(c) =>
         c.printMatrix()
-        println("solving tsp by dynamic brute force")
-        Timer.synchronousTimer{Dynamic.dynamic(c, 0)}
+
+        println(Population.random(c, 0).byFitness(c, 0))
+
+        //println("solving tsp by dynamic brute force")
+        //Timer.synchronousTimer{Dynamic.dynamic(c, 0)}
         //println("solving tsp by brute force")
         //Timer.synchronousTimer{BruteForce.bruteForce(c, 0)}
         // println("solving tsp by bruteforce in parallel")

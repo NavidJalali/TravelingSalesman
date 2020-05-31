@@ -2,13 +2,13 @@ package com.tsp
 
 import java.util.NoSuchElementException
 
-import Timer.Timer.TimerActor
-import Timer.Timer.TimerActor.{Start, Stop, TimerMessage}
 import akka.actor.ActorSystem
 import akka.actor.typed.ActorRef
 import akka.actor.typed.scaladsl.adapter._
 import akka.stream.{ActorAttributes, Supervision}
 import akka.stream.scaladsl.{Sink, Source}
+import com.Timer.Timer.TimerActor
+import com.Timer.Timer.TimerActor._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}

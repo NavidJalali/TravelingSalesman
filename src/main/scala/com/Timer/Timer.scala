@@ -1,4 +1,4 @@
-package Timer
+package com.Timer
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.Behavior

@@ -2,20 +2,24 @@ package com.tsp
 
 object Config {
   object chance {
-    def edgeExists: Double = 0.9
+    val edgeExists: Double = 0.9
   }
 
   object graph {
-    def maxWeight: Int = 100
+    val maxWeight: Int = 100
   }
 
   object printing {
-    def spacing: Int = 8
-    def pathDelimiter: String = "->"
+    val spacing: Int = 8
+    val pathDelimiter: String = "->"
   }
 
   object concurrency {
-    def parallelism: Int = 16
-    def batching: Int = 512
+    val parallelism: Int = 16
+    val batching: Int = 512
+  }
+
+  object GA {
+    val populationSize: Int = 64
   }
 }

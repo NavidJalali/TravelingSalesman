@@ -7,7 +7,9 @@ case class Population(value: Vector[Chromosome]) {
     if(0 < generations) evolve.bulkEvolve(generations - 1) else evolve
   def byFitness(costMatrix: CostMatrix, source: Int): Vector[(Chromosome, Int)] = value.map(chromosome =>
     (chromosome, Path((source +: chromosome.value) :+ source).cost(costMatrix).get)
-  ).sortBy(_._2)
+  ).sortBy{
+    case (chromosome, cost) => cost
+  }
 }
 
 object Population {

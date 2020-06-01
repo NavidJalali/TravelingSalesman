@@ -35,10 +35,10 @@ object Chromosome {
     val length = left.value.length.ensuring(_ == right.value.length)
     val (begin, end) = TwoRandomInts(length)
     val injectable = left.value.slice(begin, end)
-    val dick = right.value.splitAt(end) match {
+    val flipped = right.value.splitAt(end) match {
       case (u, v) => v ++ u
     }
-    val candidate = Chromosome(dick.filterNot(injectable.contains(_)).patch(begin, injectable, 0))
+    val candidate = Chromosome(flipped.filterNot(injectable.contains(_)).patch(begin, injectable, 0))
     if(Chromosome.isValid(source, costMatrix)(candidate))
       candidate
     else crossover(costMatrix, source)(left, right)

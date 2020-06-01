@@ -4,16 +4,15 @@ import com.Timer.Timer
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val cost = CostMatrix.randomGraph(20)
+    val cost = CostMatrix.randomGraph(10)
     // val cost = CostMatrix(Constants.exampleMatrix)
     cost match {
       case Some(c) =>
         c.printMatrix()
-
-        println(Population.random(c, 0).byFitness(c, 0))
-
-        //println("solving tsp by dynamic brute force")
-        //Timer.synchronousTimer{Dynamic.dynamic(c, 0)}
+        println("Running GA For 1024 Generations")
+        Timer.synchronousTimer{GeneticAlgorithm.geneticAlgorithm(c, 0, 1024)}
+        println("solving tsp by dynamic brute force")
+        Timer.synchronousTimer{Dynamic.dynamic(c, 0)}
         //println("solving tsp by brute force")
         //Timer.synchronousTimer{BruteForce.bruteForce(c, 0)}
         // println("solving tsp by bruteforce in parallel")

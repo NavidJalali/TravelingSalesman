@@ -22,16 +22,45 @@ object Chromosome {
   }
 
   def random(costMatrix: CostMatrix, source: Int): Chromosome = {
-    val candidate = ((0 until costMatrix.size).toSet - source)
+    val candidate = Chromosome(((0 until costMatrix.size).toSet - source)
       .map(city => (city, Random.nextDouble))
       .toVector.sortBy(_._2)
-      .map{case (city, _) => city}
-    if(Chromosome.isValid(source, costMatrix)(Chromosome(candidate)))
-      Chromosome(candidate)
+      .map{case (city, _) => city})
+    if(Chromosome.isValid(source, costMatrix)(candidate))
+      candidate
     else random(costMatrix, source)
   }
 
-  def crossover(left: Chromosome, right: Chromosome): Chromosome = ???
+  def crossover(costMatrix: CostMatrix, source: Int)(left: Chromosome, right: Chromosome): Chromosome = {
+    val length = left.value.length.ensuring(_ == right.value.length)
+    val (begin, end) = TwoRandomInts(length)
+    val injectable = left.value.slice(begin, end)
+    val dick = right.value.splitAt(end) match {
+      case (u, v) => v ++ u
+    }
+    val candidate = Chromosome(dick.filterNot(injectable.contains(_)).patch(begin, injectable, 0))
+    if(Chromosome.isValid(source, costMatrix)(candidate))
+      candidate
+    else crossover(costMatrix, source)(left, right)
+  }
 
-  def invert(mutant: Chromosome): Chromosome = ???
+  def invert(costMatrix: CostMatrix, source: Int)(mutant: Chromosome): Chromosome = {
+    val length = mutant.value.length
+    val (left, right) = TwoRandomInts(length)
+    val candidate = Chromosome((0 until length).map(i =>
+      if(i == left) mutant.value(right)
+      else if(i == right) mutant.value(left)
+      else mutant.value(i)
+    ).toVector)
+    if(Chromosome.isValid(source, costMatrix)(candidate))
+      candidate
+    else invert(costMatrix, source)(mutant)
+  }
+
+  private def TwoRandomInts(lessThan: Int): (Int, Int) = {
+    (Random.nextInt(lessThan), Random.nextInt(lessThan)) match {
+      case (u, v) if u != v => if (u <= v) (u, v) else (v, u)
+      case _ => TwoRandomInts(lessThan)
+    }
+  }
 }

@@ -1,8 +1,8 @@
 package com.tsp
 
 object GeneticAlgorithm {
-  def geneticAlgorithm(costMatrix: CostMatrix, source: Int, generations: Int = 100): Unit = {
-    val population = Population.random(costMatrix, source)
-    population.evolve(100)
+  def geneticAlgorithm(costMatrix: CostMatrix, source: Int, generations: Int = Config.GA.defaultGenerations): Unit = {
+    Population.random(costMatrix, source)
+      .bulkEvolve(costMatrix, source)(generations).fittest(costMatrix, source)
   }
 }

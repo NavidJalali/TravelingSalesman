@@ -21,5 +21,11 @@ object Config {
 
   object GA {
     val populationSize: Int = 64
+    val defaultGenerations: Int = 1024
+    object Probability {
+      val mutation: Double = 0.1
+      val crossover: Double = 0.85
+      val random: Double = 0.05
+    }
   }
 }

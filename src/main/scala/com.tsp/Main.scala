@@ -9,8 +9,8 @@ object Main {
     cost match {
       case Some(c) =>
         c.printMatrix()
-        println("Running GA For 1024 Generations")
-        Timer.synchronousTimer{GeneticAlgorithm.geneticAlgorithm(c, 0, 10)}
+        println(s"Running GA For ${Config.GA.defaultGenerations} Generations")
+        Timer.synchronousTimer{GeneticAlgorithm.geneticAlgorithm(c, 0)}
         //println("solving tsp by dynamic brute force")
         //Timer.synchronousTimer{Dynamic.dynamic(c, 0)}
         //println("solving tsp by brute force")

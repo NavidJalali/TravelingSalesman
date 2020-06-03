@@ -2,7 +2,7 @@ package com.tsp
 
 object Config {
   object chance {
-    val edgeExists: Double = 0.9
+    val edgeExists: Double = 1
   }
 
   object graph {
@@ -16,11 +16,11 @@ object Config {
 
   object concurrency {
     val parallelism: Int = 16
-    val batching: Int = 512
+    val batching: Int = 8192
   }
 
   object GA {
-    val populationSize: Int = 64
+    val populationSize: Int = 100
     val defaultGenerations: Int = 1024
     object Probability {
       val mutation: Double = 0.1

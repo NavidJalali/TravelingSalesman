@@ -18,18 +18,13 @@ object BruteForce {
     .toSet - source).toVector
     .permutations.map(p => Path((source +: p) :+ source))
 
-  def bruteForce(costMatrix: CostMatrix, source: Int): Unit = {
-    val possibleTours = allTours(costMatrix, source).map(tour => (tour, tour.cost(costMatrix))).collect {
+  def bruteForce(costMatrix: CostMatrix, source: Int): Unit =
+    allTours(costMatrix, source).map(tour => (tour, tour.cost(costMatrix))).collect {
       case (tour, Some(cost)) =>
         (tour, cost)
-    }.toList
-
-    possibleTours.minBy {
-      case (_, cost) => cost
-    } match {
-      case (path, cost)  => println(s"best tour: ${path.prettyString}, $cost")
+    }.reduce((l, r) => if (l._2 <= r._2) l else r) match {
+      case (path, cost) => println(s"best tour: ${path.prettyString}, $cost")
     }
-  }
 
   def bruteForceWithStreams(costMatrix: CostMatrix, source: Int): Unit = {
 

@@ -48,7 +48,7 @@
 
 %%% The "real" document content comes below...
 
-\title{Multiple Traveling Salesman Problem [DRAFT]}
+\title{Traveling Salesman and Multiple Traveling Salesman Problem [DRAFT]}
 \author{Navid Kooshkjalali}
 \date{Autumn 2020}
 
@@ -62,7 +62,7 @@ The multiple traveling salesman problem (mTSP) is a generalization of the famous
 \subsection{Problem Statement}
 
 \subsubsection{TSP}
-Given a set of nodes, let there be a salesman located at a single depot node. The remaining nodes (cities) that are to be visited are called intermediate nodes. Then the TSP is finding the tour that starts and ends at the depot, such that such that each intermediate node is visited exactly once and the total cost along that tour is minimized. This is equivalent to finding the least weight Hamiltonian cycle in a complete weighted graph. Since mTSP is an extention of TSP all mTSP solutions are also valid TSP solutions. TSP was documented by Euler in 1759, whose interest was in solving the knight’s tour problem. It is the fundamental problem in the fields of computer science, engineering, operations research, discrete mathematics, graph theory, and so forth. In 1972, Richard M. Karp showed that the Hamiltonian cycle problem was NP-Complete, which implies the NP-Hardness of TSP.
+Given a set of nodes, let there be a salesman located at a single depot node. The remaining nodes (cities) that are to be visited are called intermediate nodes. Then the TSP is finding the tour that starts and ends at the depot, such that such that each intermediate node is visited exactly once and the total cost along that tour is minimized. This is equivalent to finding the least weight Hamiltonian cycle in a complete weighted graph. Since mTSP is an extention of TSP all mTSP solutions are also valid TSP solutions. TSP was documented by Euler in 1759, whose interest was in solving the knight's tour problem. It is the fundamental problem in the fields of computer science, engineering, operations research, discrete mathematics, graph theory, and so forth. In 1972, Richard M. Karp showed that the Hamiltonian cycle problem was NP-Complete\cite{karp72}, which implies the NP-Hardness of TSP.
 
 
 \subsubsection{mTSP}
@@ -98,32 +98,95 @@ The decision version of TSP (where given a length K, the task is to decide wheth
 
 TSP can be formulated as an \textbf{integer linear program}\cite{ilp1, ilp2, ilp3} with several known formulations, most notable of which are \textbf{the Miller-Tucker-Zemlin(MTZ)} and \textbf{the Dantzig–Fulkerson–Johnson (DFJ) formulation}. \par
 Traditional approaches to solving TSP are similar to any NP-Hard problem.
-\subsection{Exact Aglorithms} Producing exact solutions using exact algorithms (algorithms that solve for optimality of the solution) can only work in reasonable time if the number of cities is small. The most direct of these solutions (the naive approach) is to try all possible permutations and find the cheapest by brute force search. The running time of such approach lies within a polynomial factor of $O(n!)$ where n is the number of cities. The following is a pseudocode for this approach (For implementation see \textbf{com.tsp.BruteForce.bruteForce}).
+
+
+\subsection{Exact Aglorithms} Producing exact solutions using exact algorithms (algorithms that solve for optimality of the solution) can only work in reasonable time if the number of cities is small. The most direct of these solutions (the naive, or so-called top-down approach) is to try all possible permutations and find the cheapest by brute force search. The running time of such approach lies within a polynomial factor of $O(n!)$ where n is the number of cities (Stirling's approximation: $n! \approx \sqrt{2 \pi n} (\frac{n}{e})^n$). The following is a pseudocode for this approach (For implementation see \textbf{com.tsp.BruteForce.bruteForce}).
  
 \begin{enumerate}
 \item Let $S$ be the set of all $(n-1)!$ possible path permutations.
 \item Let $T$ be the a mapping of each path of $S$ to a tuple of that path and the total distance of it. $ S\rightarrow T: \forall s_i \in S $, $ \exists! t_i \in T|t_i =(s_i, \textup{Cost}(s_i))$
-\item Reduce $T$ by taking a by taking the tuple with minimum distance.
+\item Let R be the following reducer: (left: (Path, Cost), right: (Path: Cost)) $\Rightarrow$ if (left.Cost $\leq$ right.Cost) left else right
+\item Reduce $T$ by $R$
 \end{enumerate}
 
 
-By the application concurrency and streaming, one can significantly boost the running time of this approach. The following is a pseudocode for this approach (For implementation see \textbf{com.tsp.BruteForce.bruteForceWithStreams}). 
+It can be observed that this operation does not hold any state, as in calculating the cost of a path does not depend on the cost of any sub-path previously calculated. The function does not \textit{remember} the cost of anything, it calls the \textbf{CostMatrix.costOf(path: Path): Option[Cost]} function. So it will have to check the adjacency matric for al adjacent cities and incurr the cost unboxing optional costs every time. While this is inefficient, it gives us an oppurtinity to parallelize the task at hand. By the application concurrency and streaming, one can significantly boost the running time of this approach. For the implementation in Scala I've used the Akka library. Akka is a free and open-source toolkit and runtime simplifying the construction of concurrent and distributed applications on the JVM. Akka supports multiple programming models for concurrency, but it emphasizes actor-based concurrency, with inspiration drawn from Erlang. Akka Streams, gives us the ability to assign chunked subtasks to actors. Actors are simple agents that communicate through a messaging system. Actors will find a thread on a thread pool when given a message to do some computation, execute the computation, and if necessary reply back to to the sender of the message. Akka Streams helps us abstract away the assignment of Runnables to threads and supervision of such an actor hierarchy, without the use of low-level concurrency constructs like atomics or locks. It also provides the possibility of clustered computation on multiple JVMs and resilience and reliability features such as backpressure. All we have to do is define a stream with a Source, optionally a Flow and a Sink. The following is a pseudocode for this approach (For implementation see \textbf{com.tsp.BruteForce.bruteForceWithStreams}).
 
 \begin{enumerate}
 \item Let $S$ be the set of all $(n-1)!$ possible path permutations.
-\item Let $G = \{X_0, X_1, ..., X_k\} $ such that $X_i$ are subsets of $S$ and $X_0 \cup X_1 \cup ... \cup X_k = S$ and $\forall X_i$ where $ 0 \leq i< k$, $\left | X_i \right | = const.$ Tuning this constant based on the hardware can optimize for spatial locality of reference, giving a speed boost thank to caching.
+\item Let $G = \{X_0, X_1, ..., X_k\} $ such that $X_i$ are subsets of $S$ and $X_0 \cup X_1 \cup ... \cup X_k = S$ and $\forall X_i$ where $ 0 \leq i< k$, $\left | X_i \right | = const.$ Tuning this constant depending on the hardware can give us better performance.
 \item Create a thread pool and implement a stream with the following setup:
 \begin{itemize}
-\item \textbf{Source}: G
-\item \textbf{Flow}: Asynchronously and unordered, m
-\item \textbf{Sink}: 
+\item Let R be the following reducer: (left: (Path, Cost), right: (Path: Cost)) $\Rightarrow$ if (left.Cost $\leq$ right.Cost) left else right
+\item Let the \textbf{Source} be: G
+\item Let the \textbf{Flow} be: Asynchronously and unordered, map elements of $X_i$  to $T_i$ such that $ X_i \rightarrow T_i: \forall x_k \in X_i $, $ \exists! t_k\in T_i|t_k =(x_k, \textup{Cost}(s_k))$. Then Reduce $T$ by $R$.
+\item Let the \textbf{Sink} be: Reduce incoming $(Path, Cost)$ stream by R.
 \end{itemize}
 \end{enumerate}
 
  Despite these efforts such a solution will become impractical even when the number of cities is as small 20. A typical way to improve such brute force approaches is the usage of dynamic programming and memoization. \par
- One of the earliest dynamic programming applications of TSP is the Held-Karp algorithm. This algorithm offers faster (but still exponential time) execution than exhaustive enumeration, with the disadvantage using a lot of space: the worst-case complexity of this algorithm is $O(2^n n^2)$ in time and $O(2^n n)$ in space. Held-Karp takes advantage of the property in TSP that \textbf{\textit{every subpath of a path of minimum distance is itself of minimum distance}}. Therefore as opposed to the \textbf{top-down} naive approach of exhaustive enumeration, a \textbf{bottom-up} approach is used such that all the intermediate information required to solve the problem is evaluated only once, and them memoized so that it's value can be later read in constant time. Starting from the smallest sub-path, and building larger paths, using the information previously evaluated. To summerize the Held-Karp algorithm saves time by eliminating redundant evaluation of information necessary to solve the problem. 
+ One of the earliest dynamic programming applications of TSP is the Held-Karp algorithm. This algorithm offers faster (but still exponential time) execution than exhaustive enumeration, with the disadvantage using a lot of space: the worst-case complexity of this algorithm is $O(2^n n^2)$ in time and $O(2^n n)$ in space. Held-Karp takes advantage of the property in TSP that \textbf{\textit{every subpath of a path of minimum distance is itself of minimum distance}}. Therefore as opposed to the \textbf{top-down} naive approach of exhaustive enumeration, a \textbf{bottom-up} approach is used such that all the intermediate information required to solve the problem is evaluated only once, and them memoized so that it's value can be later read in constant time. Starting from the smallest sub-path, and building larger paths, using the information previously evaluated. To summerize the Held-Karp algorithm saves time by eliminating redundant evaluation of information necessary to solve the problem. The following is the pseudocode for this approach (For implementation see \textbf{com.tsp.Dynamic.dynamic}) \\
+Let V be the set of all cities and v be the depot and c be the cost function.
+\begin{enumerate}
+\item  \textbf{foreach} $w \in V$ \textbf{do} \\
+\hspace*{5mm} $Memo(\left \{ w \right \}, w) \leftarrow c(v, w)$ \\
+\hspace*{5mm} $Parent(\left \{ w \right \}, w) \leftarrow v$ 
+\item \textbf{for} $i = 2, ..., \left | V  \right |$ \textbf{do} \\
+\hspace*{5mm} \textbf{for} $S \subseteq V$ where $\left | S  \right |=i$ \textbf{do} \\
+\hspace*{10mm} \textbf{foreach} $w \in S$ \textbf{do} \\
+\hspace*{15mm} \textbf{foreach} $u \in S$ \textbf{do} \\
+\hspace*{20mm} $z \leftarrow Memo(S \backslash \left \{ w \right \}, u) + c(u, w)$ \\
+\hspace*{20mm} \textbf{if} $z < Memo(S, w)$ \textbf{then} \\
+\hspace*{25mm} $Memo(S, w) \leftarrow z$ \\
+\hspace*{25mm} $Parent(S, w) \leftarrow u$ \\
+\item Return the Path obtained by backtracking over cities in Parent starting at Parent(V, v)
+\end{enumerate}
 
+\subsection{Heuristic Aglorithms}
+A heuristic is a technique designed for solving a problem more quickly when classic methods are too slow, or for finding an approximate solution when classic methods fail to find any exact solution. This is achieved by trading optimality, completeness, accuracy, or precision for speed. The objective of a heuristic is to produce a solution in a reasonable time frame that is good enough for solving the problem at hand. This solution may not be the best of all the solutions to this problem, or it may simply approximate the exact solution. But it is still valuable because finding it does not require a prohibitively long time. Results about NP-hardness in theoretical computer science make heuristics the only viable option for a variety of complex optimization problems that need to be routinely solved in real-world applications. In the following we will briefly discuss some well known heuristic approaches to TSP.
 
+\begin{itemize}
+\item Nearest neighbor heuristic: A Greedy algorithm. There are sub-classes of instances for which Nearest-Neighbor consistently produces the worst tour\cite{guti2007}.
+\item Clarke-Wright heuristic\cite{clarke64}: Identify a 'hub' vertex. Compute starting cost as cost of going through the hub. Identify 'savings' for each pair of vertices. Take shortcuts and add them to final tour, as long as no cycles are created.
+\item Minimum spanning tree heuristic: The tour's length is no worse than twice the optimal tour's length.The first heuristic to produce solutions within a constant of optimal. It is very easy to implement as MST can be found efficiently.
+\begin{enumerate}
+\item First find the minimum spanning tree (using any MST algorithm).
+\item Pick any vertex to be the root of the tree.
+\item Traverse the tree in pre-order.
+\item Return the order of vertices visited in pre-order.
+\end{enumerate}
+\item Christofides heuristic\cite{chris76}: First find the MST. Identify odd-degree vertices. There are an even number of such odd-degree vertices. Find a minimal matching of these odd-degree vertices and add those edges. Now all vertices have even degree. Next, find an Euler tour. Now, walk along in Euler tour, but skip visited nodes. This produces a TSP tour.
+\item K-Opt heuristic\cite{twoopt}: Start off with some tour. Find and swap K edges and their endpoints and see if the cost improves. 
+\item Tabu search\cite{tabu}: Suppose we decide to climb out of local minima. The issue is that we could immediately return to the same local minima. In tabu-search, you maintain a list of 'tabu tours', The algorithm avoids these. Each time you pick a minimum in a neighborhood, add that to the tabu list. A potential problem is a tabu-list can grow very long. Some policy should be used to remove items from the tabu list. For instance Least Recently Used, or throw out high-cost tours.
+\item Simulated annealing\cite{annealing}: Annealing is a metallurgic process for improving the strength of metals, where they are cooled slowly because it gives molecules more time to \textit{settle} into a globally optimal configuration. This global minimum corresponts to the lowest-energy state. Simulated annealing is a modified local-search used to solve combinatorial optimization problems. Cost is associated energy and the goal is to find the lowest energy state. As mentioned above, the problem with local-search is that it might get stuck at local minimum. Simulated annealing will allow jumps to higher-cost states. Just like local-search, if a randomly-selected neighbor has lower-cost, jump to it. If the randomly-selected neighbor is of higher-cost, flip a coin to decide whether to jump to higher-cost state. If the current state is $s$ with cost $Cost(s)$ and the randomly selected neighbor is $s^\dagger$ with cost $Cost(s^\dagger) > Cost(s)$ then the jump probability is $\textup{exp}(\frac{Cost(s^\dagger) - Cost(s)}{kT})$. The probablity of coinflip is decreased as time goes on by decreasing temperature $T$. As a rule of thumb if a greedy local search algorithm will do well, so will simulated annealing, so it should be experimented with first.
+\item Genetic Algorithm: As previously discussed, GA is a metaheuristic that applies ideas from natural selection. Genetic algorithms are used to generate 'good enough' solutions to optimization and search problems by applying operators such as mutation, crossover and selection to so called chromosomes which are valid possible solutions. For implementation see \textbf{com.tsp.GeneticAlgorithm.geneticAlgorithm}. The idea is to generate a random \textit{Population}, usually a one dimensional sequence of chromosomes. A scalar is then assigned to each chromosome representing its \textit{fitness}. A mating pool has to be drawn from the population using a selection strategy. The most common of which are 
+\begin{itemize}
+\item \textbf{Fitness proportionate selection}: where the fitness of each individual relative to the population is used to assign a probability of selection and therefore requires exhaustive enumeration of the population. This approach generally takes the fewest iterations until convergence and also enables a concept called \textbf{Elitism} which is means to carry out the best individuals into the next generetion, ensuring that the most successful individuals persist.
+\item \textbf{Tournament selection} A set number of individuals are randomly selected from the population and the one with the highest fitness in the group is chosen as the first parent. This is repeated to chose the second parent. This requires more iterations for convergence but works well when the call to the fitness function is computationally expensive. It provides built in scaling.
+\end{itemize}
+For this project, fitness proportionate selection is used since the cost function is relatively cheap and we can use elitism. Having created the mating pool, we can initiate the generation of the next population by applying operators such as mutation and crossover. Mutation serves an important function in GA, as it helps to avoid local convergence by introducing novel routes that will allow us to explore other parts of the solution space. TSP has special considerations when it comes to mutation, namely after the mutation we must generate a valid chromosome. This can be achieved by implementing a \textbf{Swap Mutation}. This means that, with specified low probability, two cities will swap genes in our chromosomes (cities in our tours). There are numerous crossover methods, most famous of which is single point crossover where the chromosomes are split at a point and one left and right slice of the offspring come from either parent. Unfortunately in the case TSP this cannot be applied since it might yield an invalid chromosome. The crossover operator currently implemented is the so called \textbf{Ordered Crossover (OX)}. In OX we randomly select a subset of genes from one of the parent chromosomes and then fill the remainder of the chromosome from the other parent in the order in which they appear, obviously without duplication of of genes from the first parent's selected subset. \\
+By repetition of this proccess the population can quite quickly converge into 'good' solutions. It is important to note that the process of evolving a GA is a function call which will block a thread. It is possible to evolve the multiple GAs concurrently with supervision to ensure that they traverse sections parts of the solution space. While this is not currently implemented, it will be in the near future.
+\end{itemize}
+
+\section{Multiple Traveling Salesman Problem}
+In the case of mTSP, a set of cities are given, and all of the cities must be visited exactly once by the salesmen who all start and end at the single depot node. The number of cities is denoted by n and the number of salesman by m.
+The goal is to find tours for all salesmen, such that the total travelling cost (the cost of
+visiting all nodes) is minimized. The cost metric can be defined in terms of distance,
+time, etc. Some possible variations of the problem are as follows: 
+\begin{itemize}
+\item Multiple depots: If there exist multiple depots with a number of salesmen located
+at each, a salesman can return to any depot with the restriction that the initial number of salesmen at each depot remains the same after all the travel. 
+\item Number of salesmen: The number of salesmen in the problem can be a fixed number or a bounded variable. 
+\item Fixed charges: If the number of salesmen is a bounded variable, usually the usage
+of each salesman in the solution has an associated fixed cost. In this case the minimization of this bounded variable may be involved in the optimization.
+\item Time windows: Certain cities must be visited in specific time periods, named as
+time windows. This extension of mTSP is referred to as multiple Traveling Salesman Problem with Time Windows (mTSPTW).
+\item Other restrictions: These additional restrictions can consist of the maximum or
+minimum distance or travelling duration a salesman travels, or other special
+constraints. 
+\end{itemize}
+There are several exact algorithms for mTSP with relaxation of some constraints of the problem. \cite{cuttingmtps, bbmtsp} provide algorithms based on the Branch and Bound algorithm. Due to the combinatorial complexity of mTSP, it is necessary to apply some heuristic in the solution, especially in real-sized applications. In \cite{nn} mTSP is converted into a single TSP and apply a modified GA to solve the problem. And in \cite{twopart} a new approach to represent chromosomes is found that reduces the size of the search space by eliminating redundant solutions, this called the \textit{two-part chromosome technique}. According to the referred paper, this representation is the most effective one so far. There are several representations of mTSP, like one chromosome technique, the two chromosome technique and the latest two-part chromosome technique. Each of the previous approaches has used only a single chromosome to represent the whole problem, although salesmen are physically separated from each other.
+The novel approach presented in the next chapter use multiple chromosomes to model the tours. 
 \newpage
 
 \begin{thebibliography}{10}
@@ -165,8 +228,8 @@ Systems, Man, and Cybernetics, Part B: Cybernetics, vol. 26, no.
 1, pp. 29–41, 1996.
 
 \bibitem{nn}
- S. Bhide, N. John, and M. R. Kabuka, “A Boolean Neural
-Network Approach for the Traveling Salesman Problem,” IEEE
+ S. Bhide, N. John, and M. R. Kabuka, "A Boolean Neural
+Network Approach for the Traveling Salesman Problem," IEEE
 Transactions on Computers, vol. 42, no. 10, pp. 1271–1278, 1993.
 
 \bibitem{tabu}
@@ -201,6 +264,24 @@ Artificial Intelligence, University of Michigan Press, Oxford, UK,
 1960.
 \bibitem{ilp3}
  Dantzig, George B. (1963), Linear Programming and Extensions, Princeton, NJ: PrincetonUP, pp. 545–7, ISBN 0-691-08000-3, sixth printing, 1974.
+
+\bibitem{karp72}
+R. M. Karp, "Reducibility Among Combinotorial Problems", R. E. Miller; J. W. Thatcher; J.D. Bohlinger (eds.). Complexity of Computer Computations. New York: Plenum. pp. 85–103. 1972
+
+\bibitem{guti2007} G.Gutin and A.Yeo. The Greedy Algorithm for the Symmetric TSP. Algorithmic Oper. Res., Vol.2, pp.33--36. 2007
+
+\bibitem{clarke64} G. Clarke and J. W. Wright. Scheduling of vehicles from a central depot to a number of delivery points. Op. Res., 12 ,1964, pp.568-581
+
+\bibitem{chris76}  N. Christofides. Worst-case analysis of a new heuristic for the travelling salesman problem. Report No. 388, GSIA, Carnegie-Mellon University, Pittsburgh, PA, 1976.
+
+\bibitem{cuttingmtps}
+Laporte, G., Nobert, Y.: A Cutting Planes Algorithm for the m-Salesmen Problem. Journal of the Operational Research Society 31, 1017–1023. 1980
+
+\bibitem {bbmtsp}
+Ali, A. I., Kennington, J. L.: The Asymmetric m-Traveling Salesmen Problem: a Dualitybased Branch-and-Bound Algorithm. Discrete Applied Mathematics 13, 259–276. 1986
+
+\bibitem{twopart}
+Carter, A.E., Ragsdale, C.T.: A New Approach to Solving the Multiple Traveling Salesperson Problem Using Genetic Algorithms. European Journal of Operational Research 175, 246–257. 2006
 
 \end{thebibliography}
 \end{document}

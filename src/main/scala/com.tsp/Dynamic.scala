@@ -13,7 +13,7 @@ object Dynamic {
         case Some(value) => value
         case None => via.map(city =>
           minimumToSourceWithParent(city, via - city).flatMap {
-            case (cost, parent) => (costMatrix.costOf(city, destination) + cost).toOption.map((_, parent))
+            case (cost, _) => (costMatrix.costOf(city, destination) + cost).toOption.map((_, city))
           }
         ).reduce((u: CostWithParent, v: CostWithParent) =>
           (u, v) match {

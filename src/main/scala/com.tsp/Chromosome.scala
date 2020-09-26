@@ -1,28 +1,30 @@
 package com.tsp
 
+import scala.annotation.tailrec
 import scala.util.Random
 
-case class Chromosome(value: Vector[Int]) {
-  def fatness(costMatrix: CostMatrix, source: Int): Int = {
+case class Chromosome(value: Vector[Node]) extends AnyVal {
+  def fatness(costMatrix: CostMatrix, source: Node): Int = {
     Path((source +: value) :+ source).cost(costMatrix).getOrElse(Int.MaxValue)
   }
 }
 
 object Chromosome {
-  def isValid(source: Int, costMatrix: CostMatrix)(chromosome: Chromosome): Boolean = {
+  def isValid(source: Node, costMatrix: CostMatrix)(chromosome: Chromosome): Boolean = {
     !(chromosome.value.contains(source) &&
       chromosome.value.size == costMatrix.size - 1) && allNodesExist(costMatrix, source)(chromosome)
   }
 
-  private def allNodesExist(costMatrix: CostMatrix, source: Int)(chromosome: Chromosome): Boolean = {
+  private def allNodesExist(costMatrix: CostMatrix, source: Node)(chromosome: Chromosome): Boolean = {
     val path = (source +: chromosome.value) :+ source
     (path zip path.tail).forall {
-      case (from, to) => costMatrix.value(from)(to).isDefined
+      case (Node(from), Node(to)) => costMatrix.matrix(from)(to).isDefined
     }
   }
 
-  def random(costMatrix: CostMatrix, source: Int): Chromosome = {
-    val candidate = Chromosome(((0 until costMatrix.size).toSet - source)
+  @tailrec
+  def random(costMatrix: CostMatrix, source: Node): Chromosome = {
+    val candidate = Chromosome(((0 until costMatrix.size).map(Node).toSet - source)
       .map(city => (city, Random.nextDouble))
       .toVector.sortBy(_._2)
       .map{case (city, _) => city})
@@ -31,7 +33,8 @@ object Chromosome {
     else random(costMatrix, source)
   }
 
-  def crossover(costMatrix: CostMatrix, source: Int)(left: Chromosome, right: Chromosome): Chromosome = {
+  @tailrec
+  def crossover(costMatrix: CostMatrix, source: Node)(left: Chromosome, right: Chromosome): Chromosome = {
     val length = left.value.length.ensuring(_ == right.value.length)
     val (begin, end) = TwoRandomInts(length)
     val injectable = left.value.slice(begin, end)
@@ -44,7 +47,8 @@ object Chromosome {
     else crossover(costMatrix, source)(left, right)
   }
 
-  def invert(costMatrix: CostMatrix, source: Int)(mutant: Chromosome): Chromosome = {
+  @tailrec
+  def invert(costMatrix: CostMatrix, source: Node)(mutant: Chromosome): Chromosome = {
     val length = mutant.value.length
     val (left, right) = TwoRandomInts(length)
     val candidate = Chromosome((0 until length).map(i =>
@@ -57,6 +61,7 @@ object Chromosome {
     else invert(costMatrix, source)(mutant)
   }
 
+  @tailrec
   private def TwoRandomInts(lessThan: Int): (Int, Int) = {
     (Random.nextInt(lessThan), Random.nextInt(lessThan)) match {
       case (u, v) if u != v => if (u <= v) (u, v) else (v, u)

@@ -1,14 +1,20 @@
 package com.tsp
 
-case class Path(nodes: Vector[Node]) extends AnyVal {
+case class Path(value: Vector[Int])
 
-  def :+(node: Node): Path = Path(nodes :+ node)
+object Path {
 
-  def cost(costMatrix: CostMatrix): Cost =
-    Cost
-      .sum((nodes zip nodes.tail).map {
-      case (source, dest) => costMatrix.costOf(source, dest)
-    })
+  implicit class PathEnhancer(path: Path) {
 
-  def prettyString: String = nodes.map(_.nodeIndex).mkString("Path(", Config.printing.pathDelimiter, ")")
+    def cost(costMatrix: CostMatrix): Option[Int] = {
+      val costs = (path.value zip path.value.tail).map {
+        case (source, dest) => costMatrix.costOf(source, dest)
+      }.collect { case Some(cost) => cost }
+
+      if (costs.length == path.value.length - 1) Some(costs.sum) else None
+    }
+
+    def prettyString: String = path.value.mkString("Path(", Config.printing.pathDelimiter, ")")
+  }
+
 }

@@ -2,61 +2,48 @@ package com.tsp
 
 import scala.util.Random.nextDouble
 
-case class CostMatrix(matrix: Vector[Vector[Cost]]) extends AnyVal {
+case class CostMatrix(value: Vector[Vector[Option[Int]]]) {
   def printMatrix(): Unit = {
-    matrix.map(_.map {
-      case Finite(cost) => cost.toString
-      case Infinite => "∞"
+    value.map(_.map {
+      case Some(cost) => cost.toString
+      case None => "Inf"
     }).map(_.fold("")((a, b) => a + " " * (Config.printing.spacing - b.length) + b))
       .foreach(println)
   }
 
-  def size: Int = matrix.length
+  def size: Int = value.length
 
-  def allNodes: Vector[Node] = (0 to size).map(Node).toVector
-
-  def isValidNode(node: Node): Boolean = node.nodeIndex >= 0 && node.nodeIndex < size
-
-  def outgoingVerticesAndCosts(from: Node): Set[(Node, Cost)] =
-    if (from.nodeIndex >= 0 & from.nodeIndex < size)
-      (allNodes zip matrix(from.nodeIndex)).collect {
-        case t@(f, Finite(_)) if f != from => t
-      }.toSet
+  def outgoingVerticesAndCosts(from: Int): Set[(Int, Int)] =
+    if (from >= 0 & from < size)
+      ((0 until size) zip value(from)).collect {
+        case (vertex, Some(cost)) => (vertex, cost)
+      }.toSet diff Set((from, 0))
     else
       throw new IllegalArgumentException("outwardEdges source is out of bounds.")
 
-  def getExistingRoutes(startFrom: Node, length: Int): Set[(Path, Cost)] = {
-    val init: Set[(Path, Cost)] = outgoingVerticesAndCosts(startFrom).map {
-      case (vertex, cost) => (Path(Vector(vertex)), cost)
+  def getExistingRoutes(startFrom: Int, length: Int): Set[(Vector[Int], Int)] = {
+    val init = outgoingVerticesAndCosts(startFrom).map {
+      case (vertex, cost) => (Vector(vertex), cost)
     }
-    val targetSet = (0 until length).map(Node).toSet - startFrom
+    val targetSet = (0 until length).toSet diff Set(startFrom)
 
     @scala.annotation.tailrec
-    def iterate(pathCostSet: Set[(Path, Cost)]): Set[(Path, Cost)] = {
-      if (pathCostSet.forall {
-        case (path, _) => path.nodes.toSet == targetSet
-      }) {
-        pathCostSet
-          .map{ case (path, totalCost) => (path, totalCost, outgoingVerticesAndCosts(path.nodes.last))}
-          .collect {
-          case (path, totalCost, lastOutNodesAndCosts) if lastOutNodesAndCosts
-            .exists { case (node, _) => node == startFrom } =>
-            val returnCost = lastOutNodesAndCosts
-              .collect{ case (outgoing, returnCost) if outgoing == startFrom => returnCost }.head
-            (path :+ startFrom, totalCost + returnCost)
+    def iterate(pathCostSet: Set[(Vector[Int], Int)]): Set[(Vector[Int], Int)] = {
+      if (pathCostSet.forall(_._1.toSet == targetSet)) {
+        pathCostSet.collect {
+          case (path, totalCost) if outgoingVerticesAndCosts(path.last)
+            .exists(t => t._1 == startFrom) =>
+            val t = outgoingVerticesAndCosts(path.last).filter(t => t._1 == startFrom).head
+            (path :+ startFrom, totalCost + t._2)
         }
       } else {
-        iterate(
-          pathCostSet
-            .map{ case (path, totalCost) => (path, totalCost, outgoingVerticesAndCosts(path.nodes.last))}
-            .collect {
-          case (path, totalCost, lastOutNodesAndCosts) if lastOutNodesAndCosts
-            .exists{case (node, _) => node != startFrom && !(path.nodes contains node)} =>
-            lastOutNodesAndCosts
-              .collect {
-                case (node, cost) if node != startFrom && !path.nodes.contains(node) =>
-                  (path :+ node, totalCost + cost)
-              }
+        iterate(pathCostSet.collect {
+          case (path, totalCost) if outgoingVerticesAndCosts(path.last)
+            .exists(t => t._1 != startFrom && !(path contains t._1)) =>
+            outgoingVerticesAndCosts(path.last)
+              .filter(t => t._1 != startFrom && !(path contains t._1)).map {
+              case (vertex, cost) => (path :+ vertex, totalCost + cost)
+            }
         }.flatten)
       }
     }
@@ -64,29 +51,24 @@ case class CostMatrix(matrix: Vector[Vector[Cost]]) extends AnyVal {
     iterate(init)
   }
 
-  def costOf(source: Node, dest: Node): Cost =
-    if (isValidNode(source) && isValidNode(dest))
-      matrix(source.nodeIndex)(dest.nodeIndex)
+  def costOf(source: Int, dest: Int): Option[Int] =
+    if (source >= 0 & source < size & dest >= 0 & dest < size)
+      value(source)(dest)
     else
       throw new IllegalArgumentException("costOf argument is out of cost matrix bounds.")
 }
 
 object CostMatrix {
-  def apply(value: Vector[Vector[Option[Int]]]): Option[CostMatrix] = {
-    val typed: Vector[Vector[Cost]] = value.map(_.map {
-      case Some(cost) => Finite(cost)
-      case None => Infinite
-    })
-    if (isValidCostMatrix(typed)) Some(new CostMatrix(typed)) else None
-  }
+  def apply(value: Vector[Vector[Option[Int]]]): Option[CostMatrix] =
+    if (isValidCostMatrix(value)) Some(new CostMatrix(value)) else None
 
-  def isValidCostMatrix(c: Vector[Vector[Cost]]): Boolean =
+  def isValidCostMatrix(c: Vector[Vector[Option[Int]]]): Boolean =
     hasZeroesAlongDiagonal(c) && isSquareMatrix(c)
 
-  private def hasZeroesAlongDiagonal(c: Vector[Vector[Cost]]): Boolean =
+  private def hasZeroesAlongDiagonal(c: Vector[Vector[Option[Int]]]): Boolean =
     c.indices.map(i => c(i)(i).contains(0)).reduce(_ & _)
 
-  private def isSquareMatrix(c: Vector[Vector[Cost]]): Boolean =
+  private def isSquareMatrix(c: Vector[Vector[Option[Int]]]): Boolean =
     c.map(_.length == c.length).reduce(_ & _)
 
   private def randomEntry: Option[Int] =

@@ -14,19 +14,19 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 object BruteForce {
-  def allTours(costMatrix: CostMatrix, source: Node): Iterator[Path] = ((0 until costMatrix.size).map(Node)
+  def allTours(costMatrix: CostMatrix, source: Int): Iterator[Path] = ((0 until costMatrix.size)
     .toSet - source).toVector
     .permutations.map(p => Path((source +: p) :+ source))
 
-  def bruteForce(costMatrix: CostMatrix, source: Node): Unit =
+  def bruteForce(costMatrix: CostMatrix, source: Int): Unit =
     allTours(costMatrix, source).map(tour => (tour, tour.cost(costMatrix))).collect {
-      case (tour, Finite(cost)) =>
+      case (tour, Some(cost)) =>
         (tour, cost)
     }.reduce((l, r) => if (l._2 <= r._2) l else r) match {
       case (path, cost) => println(s"best tour: ${path.prettyString}, $cost")
     }
 
-  def bruteForceWithStreams(costMatrix: CostMatrix, source: Node): Unit = {
+  def bruteForceWithStreams(costMatrix: CostMatrix, source: Int): Unit = {
 
     implicit val system: ActorSystem = ActorSystem("BruteForce")
     implicit val ctx: ExecutionContext = system.dispatcher
@@ -50,7 +50,7 @@ object BruteForce {
           Future {
             paths
               .map(path => (path, path.cost(costMatrix)))
-              .collect { case (path, Finite(cost)) => (path, cost) } match {
+              .collect { case (path, Some(cost)) => (path, cost) } match {
               case batch if batch.nonEmpty => batch.minBy(_._2)
               case _ => throw new NoSuchElementException
             }
@@ -74,11 +74,9 @@ object BruteForce {
     }
   }
 
-  def routesByExistence(costMatrix: CostMatrix, source: Node): Unit = {
-    val bestPath = costMatrix.getExistingRoutes(source, costMatrix.size).toVector
-      .collect {
-        case (path, Finite(cost)) => (path, cost)
-      }
+  def routesByExistence(costMatrix: CostMatrix, source: Int): Unit = {
+    val bestPath = costMatrix.getExistingRoutes(0, costMatrix.size).toVector
+      .map { case (path, cost) => (Path(path), cost) }
       .sortBy(_._2)
       .headOption
     println(bestPath)
